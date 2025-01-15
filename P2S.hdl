@@ -5,10 +5,10 @@ CHIP P2S {
     PARTS:
     
     // 4-bit register to store input data
-    Register(in=indata, load=load, out=regOut);
+    Register(in=indata, load=load, out=regOut[4]);
 
     // 2-bit counter to track the current bit index
-    Counter(increment=enable, reset=reset, out=count);
+    Counter(increment=enable, reset=reset, out=count[2]);
     
     // Multiplexer to select the appropriate bit from regOut
     Mux4Way(sel=count, a=regOut[0], b=regOut[1], c=regOut[2], d=regOut[3], out=sout);
