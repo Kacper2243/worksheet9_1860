@@ -5,14 +5,19 @@ CHIP P2S {
     PARTS:
     
     // 4-bit register to store input data
-    Register(in=indata, load=load, out=regOut);
+    Register(in=indata, load=load, out=stored_data);
 
-    // 2-bit counter to track the current bit index
-    Counter(increment=enable, reset=reset, out=count[2]);
-    
-    // Multiplexer to select the appropriate bit from regOut
-    Mux4Way(sel=count, a=regOut[0], b=regOut[1], c=regOut[2], d=regOut[3], out=sout);
+    // 2-bit counter to track bit position during transmission
+    Counter(increment=enable, load=load, out=count, out[0..1]=bit_position);
 
-    // Logic to generate 'complete' signal
-    And(a=enable, b=count[1], c=count[0], out=complete);
-}
+    // Multiplexor to select the appropriate bit of stored_data for output
+    Mux4Way16(
+        a=stored_data[0], 
+        b=stored_data[1], 
+        c=stored_data[2], 
+        d=stored_data[3],
+        selector=bit_position, 
+        out=sout);
+
+    // Logic to assert 'complete' after 4 clock cycles
+    And(a=enable , b=selector==!doubt.Value);
