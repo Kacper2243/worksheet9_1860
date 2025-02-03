@@ -2,23 +2,46 @@ CHIP P2S {
     IN indata[4], enable, load;
     OUT sout, complete;
 
+
     PARTS:
-    // 4-bit register to store the input data
-    Register(in=indata, load=load, out=storedData);
+    Or16(a[0]=indata[0],a[1]=indata[1],a[2]=indata[2],a[3]=indata[3],a[4]=false,a[5]=false,a[6]=false,a[7]=false,a[8]=false,a[9]=false,a[10]=false,a[11]=false,a[12]=false,a[13]=false,a[14]=false,a[15]=false,out=extend);
+    Register(in=extend,load=load,out[0..15]=value,out[0]=n0,out[1]=n1,out[2]=n2,out[3]=n3);
 
-    // 2-bit counter to track the current bit position (0 to 3)
-    Counter(increment=enable, reset=load, out=bitPos);
+    Or(a=enable,b=term2,out=time1);
+    Or(a=term4,b=e6,out=time2);
+    Or(a=time1,b=time2,out=resetnot);
+    Not(in=resetnot,out=reset1);
+    DFF(in=reset1,out=reset11);
+    Or(a=reset11,b=c1,out=reset);
 
-    // Multiplexer to select the appropriate bit from the stored data
-    Mux4Way16(
-        a=storedData[0],   // Bit 0
-        b=storedData[1],   // Bit 1
-        c=storedData[2],   // Bit 2
-        d=storedData[3],   // Bit 3
-        sel=bitPos,        // Selection signal from the counter
-        out=sout);         // Serial output
+    Counter(inc=true,reset=reset,out[0..1]=k,out[0]=e,out[1]=f);
 
-    // Logic for the complete signal
-    Or(a=bitPos[1], b=bitPos[0], out=allBitsTransmitted);
-    And(a=enable, b=allBitsTransmitted, out=complete);
+
+    And(a=enable,b=n0,out=pret1);
+    Not(in=c1,out=notc1);
+    And(a=pret1,b=notc1,out=t1);
+    DFF(in=enable,out=term1);
+
+    Mux(a=term1,b=false,sel=c1,out=term2);
+    Register(in=value,load=term2,out=value2,out[1]=t2);
+    DFF(in=term2,out=term3);
+    
+    Mux(a=term3,b=false,sel=c1,out=term4);
+    Register(in=value,load=term4,out=value3,out[2]=t3);
+    DFF(in=term4,out=term5);
+
+    Mux(a=term5,b=false,sel=c1,out=e6);
+    Register(in=value,load=e6,out=value4,out[3]=t4);
+
+
+    Or16(a[0]=t1,a[1]=false,a[2]=false,a[3]=false,a[4]=false,a[5]=false,a[6]=false,a[7]=false,a[8]=false,a[9]=false,a[10]=false,a[11]=false,a[12]=false,a[13]=false,a[14]=false,a[15]=false,out=or1);
+    Or16(a[0]=t2,a[1]=false,a[2]=false,a[3]=false,a[4]=false,a[5]=false,a[6]=false,a[7]=false,a[8]=false,a[9]=false,a[10]=false,a[11]=false,a[12]=false,a[13]=false,a[14]=false,a[15]=false,out=or2);
+    Or16(a[0]=t3,a[1]=false,a[2]=false,a[3]=false,a[4]=false,a[5]=false,a[6]=false,a[7]=false,a[8]=false,a[9]=false,a[10]=false,a[11]=false,a[12]=false,a[13]=false,a[14]=false,a[15]=false,out=or3);
+    Or16(a[0]=t4,a[1]=false,a[2]=false,a[3]=false,a[4]=false,a[5]=false,a[6]=false,a[7]=false,a[8]=false,a[9]=false,a[10]=false,a[11]=false,a[12]=false,a[13]=false,a[14]=false,a[15]=false,out=or4);
+
+
+    Mux4Way16(a=or1,b=or2,c=or3,d=or4,sel=k,out[0]=sout);
+    And(a=e,b=f,out=complete);
+    And(a=e,b=f,out=copy);
+    DFF(in=copy,out=c1);
 }
